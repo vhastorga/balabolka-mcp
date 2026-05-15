@@ -1,8 +1,166 @@
-# ## ⚙️ MCP Client Configuration
+# Balcon MCP Server 🎙️
 
-To connect the Balcon TTS server to your MCP client, you will need to configure your client's settings file (usually `mcp_config.json` or similar). 
+MCP (Model Context Protocol) server that exposes **Text-to-Speech (TTS)** tools for AI agents, using the **Balabolka CLI (`balcon`)** together with **FFmpeg** for voice synthesis and audio concatenation.
 
-Below is an example configuration. **Remember to replace `<YOUR_USER>`** with your actual system username and adjust the path to where `balcon_mcp_server.py` is located.
+> ⚠️ **Native platform:** Balcon relies on Microsoft's native Speech API (SAPI). **Windows is its native and recommended environment.** On Linux and macOS it can be run through **Wine**, though with limited out-of-the-box voice availability.
+
+---
+
+## 📑 Table of Contents
+
+1. [Features](#-features)
+2. [Requirements](#-requirements)
+3. [Installing Dependencies](#-installing-dependencies)
+   - [Windows (Recommended)](#-windows-native--recommended)
+   - [Linux](#-linux)
+   - [macOS](#-macos)
+4. [MCP Client Configuration](#-mcp-client-configuration)
+5. [Python Requirements](#-python-requirements)
+6. [Available Tools](#-available-tools)
+7. [Usage Examples](#-usage-examples)
+8. [Troubleshooting](#-troubleshooting)
+
+---
+
+## ✨ Features
+
+| Tool | Description |
+|------|-------------|
+| `list_voices` | Lists all SAPI voices installed on the system. |
+| `list_audio_devices` | Lists available audio output devices. |
+| `text_to_speech` | Converts plain text to a WAV file using a specific voice. |
+| `text_file_to_speech` | Converts a text file (`*.txt`) to a WAV audio file. |
+| `multi_voice_speech` | Generates combined audio from multiple segments narrated by different voices using FFmpeg. |
+
+---
+
+## 📋 Requirements
+
+- **Operating System:** Windows 10/11 (native). Linux/macOS via Wine.
+- **Binaries in `PATH`:**
+  - `balcon` — Balabolka CLI ([Download](http://www.cross-plus-a.com/balcon.zip))
+  - `ffmpeg` — For multi-voice audio concatenation ([Download](https://www.gyan.dev/ffmpeg/builds/))
+- **Python:** 3.10 or higher.
+- **Python Package:** `mcp`
+
+---
+
+## 🛠️ Installing Dependencies
+
+### 🪟 Windows (Native & Recommended)
+
+#### 1. Install FFmpeg
+
+Via package manager (recommended):
+
+```powershell
+# Using winget (included in Windows 10/11)
+winget install ffmpeg
+
+# OR using Scoop
+scoop install ffmpeg
+```
+
+> If you prefer manual installation: download the ZIP from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract it, and add the `bin` subfolder to your **System Environment Variables** → `Path`.
+
+#### 2. Install Balcon (CLI)
+
+Balcon does not have a formal installer. Just download it and add it to your `PATH`:
+
+1. Download `balcon.zip` from [cross-plus-a.com](http://www.cross-plus-a.com/balcon.zip).
+2. Extract its contents to a permanent folder, for example: `C:\balcon\`.
+3. Add that folder to your system `PATH`:
+   - Press the Windows key, type *"Environment Variables"* and open it.
+   - Click **Environment Variables**.
+   - Under *System variables*, find **Path** and click **Edit**.
+   - Click **New** and paste the path: `C:\balcon`
+   - Click OK and close all windows.
+
+#### 3. Verify Installation
+
+Open a **new** terminal (to refresh the `PATH`) and run:
+
+```bash
+ffmpeg -version
+balcon -l
+```
+
+The `balcon -l` command should display the list of installed SAPI voices.
+
+---
+
+### 🐧 Linux
+
+#### 1. Install FFmpeg and Wine
+
+```bash
+sudo apt update
+sudo apt install ffmpeg wine unzip
+```
+
+#### 2. Install Balcon
+
+```bash
+# Download and extract
+wget http://www.cross-plus-a.com/balcon.zip
+unzip balcon.zip -d ~/.balcon
+
+# Create alias (assuming Bash; change to ~/.zshrc if using Zsh)
+echo "alias balcon='wine ~/.balcon/balcon.exe'" >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### 3. Verify Installation
+
+```bash
+ffmpeg -version
+balcon -l
+```
+
+> **Note for Linux:** By default, when using Wine, Balcon will only detect SAPI-compatible voices that you explicitly install inside your Wine prefix environment (`~/.wine`).
+
+---
+
+### 🍏 macOS
+
+#### 1. Install FFmpeg and Wine
+
+Requires [Homebrew](https://brew.sh/):
+
+```bash
+# Install native FFmpeg
+brew install ffmpeg
+
+# Install Wine (required to emulate the Balcon executable)
+brew install --cask wine-stable
+```
+
+#### 2. Install Balcon
+
+```bash
+# Download and extract
+curl -O http://www.cross-plus-a.com/balcon.zip
+unzip balcon.zip -d ~/.balcon
+
+# Create alias (macOS uses Zsh by default on modern versions)
+echo "alias balcon='wine ~/.balcon/balcon.exe'" >> ~/.zshrc
+source ~/.zshrc
+```
+
+#### 3. Verify Installation
+
+```bash
+ffmpeg -version
+balcon -l
+```
+
+> **Note for macOS:** Balcon will not have access to native Apple voices (like Siri). It will only be able to use Windows-emulated voices that you install inside the Wine environment.
+
+---
+
+## ⚙️ MCP Client Configuration
+
+Once dependencies are installed, connect the TTS server to your MCP client by adding the following configuration to your settings file (usually `mcp_config.json` or similar):
 
 ```json
 {
@@ -10,190 +168,89 @@ Below is an example configuration. **Remember to replace `<YOUR_USER>`** with yo
     "balcon-tts": {
       "command": "python",
       "args": [
-        "C:/Users/<YOUR_USER>/.gemini/antigravity/balcon_mcp_server.py"
+        "C:/Users/<YOUR_USER>/Downloads/balabolka-mcp/balcon_mcp_server.py"
       ]
     }
   }
 }
+```
 
-# 🛠️ Setup Guide: Dependencies for Balcon MCP
-
-To run **Balcon MCP** properly, your system requires two key dependencies to be installed and available in your system's `PATH`:
-
-1. **FFmpeg**: Handles audio processing, conversion, and formatting.
-2. **Balcon**: The command-line interface (CLI) for Balabolka, responsible for the Text-to-Speech (TTS) synthesis.
-
-> ⚠️ **Compatibility Notice:** Balcon relies on the native Microsoft Speech API (SAPI), meaning **Windows is its native and recommended environment**. For Linux and macOS, you will need to run it through **Wine**. Note that non-Windows systems will only have access to the TTS voices you manually install inside the Wine environment.
-
-Below are the installation instructions for each operating system.
+> ⚠️ **Important:**
+> - Replace `<YOUR_USER>` with your actual system username.
+> - Adjust the path to `balcon_mcp_server.py` according to where you placed it.
+> - In the `args` array, use forward slashes (`/`) or double backslashes (`\\`) to avoid JSON escaping issues.
 
 ---
 
-## 🪟 Windows (Native & Recommended)
+## 🐍 Python Requirements
 
-### 1. Install FFmpeg
+1. **Verify Python is installed:**
 
-The fastest way is using a Windows package manager. Open **PowerShell** and run:
+   ```bash
+   python --version
+   ```
 
-```powershell
-# Using Winget (Built-in on Windows 10/11)
-winget install ffmpeg
+2. **Install the MCP package:**
 
-# OR using Scoop:
-scoop install ffmpeg
-```
-
-*(If you prefer to install it manually: download the ZIP from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract it, and **you must manually add the `bin` folder to your system's `PATH`**).*
-
-### 2. Install Balcon (CLI)
-
-Balcon doesn't have an installer. You just need to download the executable and add it to your PATH.
-
-1. Download the official `.zip` file from [Cross+A (balcon.zip)](http://www.cross-plus-a.com/balcon.zip).
-2. Extract the contents to a permanent folder, for example: `C:\balcon\`
-3. **Add this folder to your system `PATH`** (Crucial for the MCP to find it):
-   - Press the Windows key, type *"Environment Variables"* and select **Edit the system environment variables**.
-   - Click the **Environment Variables...** button.
-   - Under *System variables* (or *User variables*), find the **Path** variable and click **Edit**.
-   - Click **New** and paste the exact path: `C:\balcon`
-   - Click OK to save and close all windows.
-
-### 3. Verify Installation
-
-Open a **new** terminal (to refresh the PATH) and check if both commands are recognized:
-
-```bash
-ffmpeg -version
-balcon -l
-```
-
-*(The `balcon -l` command will list all available SAPI voices installed on your Windows system).*
-
----
-
-## 🐧 Linux
-
-### 1. Install FFmpeg and Wine
-
-Since Balcon is a `.exe` file, we need **Wine** to run it, along with FFmpeg. On Debian/Ubuntu-based distros, open your terminal:
-
-```bash
-sudo apt update
-sudo apt install ffmpeg wine unzip
-```
-
-*(Note: Package managers automatically add `ffmpeg` and `wine` to your PATH).*
-
-### 2. Install Balcon
-
-We will download Balcon, extract it to a hidden folder, and create an executable wrapper script in `~/.local/bin` so the MCP server can execute it like a native command.
-
-```bash
-# Download and extract
-wget http://www.cross-plus-a.com/balcon.zip
-unzip balcon.zip -d ~/.balcon
-
-# Create a wrapper script in ~/.local/bin
-mkdir -p ~/.local/bin
-echo '#!/bin/bash' > ~/.local/bin/balcon
-echo 'wine ~/.balcon/balcon.exe "$@"' >> ~/.local/bin/balcon
-chmod +x ~/.local/bin/balcon
-```
-
-### 3. Add to PATH (If you haven't already)
-
-Ensure `~/.local/bin` is in your system's PATH. Add this line to your `~/.bashrc` or `~/.zshrc`:
-
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-Apply the changes:
-
-```bash
-source ~/.bashrc  # or source ~/.zshrc
-```
-
-### 4. Verify Installation
-
-```bash
-ffmpeg -version
-balcon -l
-```
-
----
-
-## 🍏 macOS
-
-### 1. Install FFmpeg and Wine
-
-We will use [Homebrew](https://brew.sh/). If you don't have it, install it first. Then, run:
-
-```bash
-# Install native FFmpeg
-brew install ffmpeg
-
-# Install Wine to emulate the Windows .exe
-brew install --cask wine-stable
-```
-
-### 2. Install Balcon
-
-Similar to Linux, we will download it and create a wrapper script.
-
-```bash
-# Download and extract
-curl -O http://www.cross-plus-a.com/balcon.zip
-unzip balcon.zip -d ~/.balcon
-
-# Create a wrapper script in a standard local bin directory
-mkdir -p ~/.local/bin
-echo '#!/bin/bash' > ~/.local/bin/balcon
-echo 'wine ~/.balcon/balcon.exe "$@"' >> ~/.local/bin/balcon
-chmod +x ~/.local/bin/balcon
-```
-
-### 3. Add to PATH (If you haven't already)
-
-macOS uses Zsh by default. Ensure `~/.local/bin` is in your PATH so the MCP can find the `balcon` command globally:
-
-```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-```
-
-### 4. Verify Installation
-
-```bash
-ffmpeg -version
-balcon -l
-```
-
-> **macOS Note:** Balcon will not have access to native Apple voices (like Siri). The engine will only read voices installed inside the Wine environment.
-
-
-
-# 🐍 Final Checklist: Python Requirements
-
-
-Since this MCP server is built with Python, please ensure you have the following ready before trying to run it:
-
-
-1. **Python Installed & in PATH**: Make sure Python is installed on your system and added to your environment variables (`PATH`). You can verify this by opening a terminal and running:
-
-
-
-
-```
-python --version
-```
-
-   
-
-2. **Install the MCP Package**: The server requires the official MCP Python library to communicate. Install it via pip by running:
-   
    ```bash
    pip install mcp
    ```
-   
-      
+
+---
+
+## 🔧 Available Tools
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `text` | `string` | Text to synthesize. |
+| `output_file` | `string` | Full path to the output WAV file. |
+| `voice` | `string` (optional) | Exact name of the SAPI voice. Use `list_voices` to see available options. |
+| `rate` | `int` (optional) | Speed: `-10` (slow) … `0` (normal) … `10` (fast). |
+| `pitch` | `int` (optional) | Pitch: `-10` (low) … `0` (normal) … `10` (high). |
+| `volume` | `int` (optional) | Volume: `0` (mute) … `100` (maximum). |
+| `freq_khz` | `int` (optional) | Sample rate in kHz (`8`–`48`, default `22`). |
+| `bit_depth` | `int` (optional) | Bit depth (`8` or `16`, default `16`). |
+| `channels` | `int` (optional) | Audio channels (`1`=mono, `2`=stereo, default `1`). |
+
+---
+
+## 💡 Usage Examples
+
+### Simple audio generation
+
+```json
+{
+  "text": "Hello, this is a test message.",
+  "output_file": "C:/Users/YOUR_USER/Desktop/greeting.wav",
+  "voice": "Microsoft Zira Desktop",
+  "rate": 1,
+  "volume": 90
+}
+```
+
+### Multi-voice audio generation
+
+```json
+{
+  "segments": "[\n  {\"text\": \"Welcome to the tutorial.\", \"voice\": \"Microsoft David Desktop\"},\n  {\"text\": \"Today we will learn about MCP.\", \"voice\": \"Microsoft Zira Desktop\", \"rate\": 1, \"pause_before_ms\": 500}\n]",
+  "output_file": "C:/Users/YOUR_USER/Desktop/tutorial.wav",
+  "default_freq_khz": 22,
+  "default_bit_depth": 16,
+  "default_channels": 1
+}
+```
+
+---
+
+## 🩺 Troubleshooting
+
+| Symptom | Possible Cause | Solution |
+|---------|---------------|----------|
+| `balcon is not recognized` | Not in `PATH` | Add the `balcon.exe` folder to the system `Path` and restart the terminal. |
+| `ffmpeg failed to concatenate` | Incompatible version or not installed | Verify with `ffmpeg -version`. Reinstall if necessary. |
+| `No voices found` | No SAPI voices installed | On Windows, install language packs with voices from Settings → Time & Language. |
+| `balcon failed (code X)` | Text contains unescaped special characters | Ensure the text does not contain unescaped quotes inside the JSON payload. |
+
+---
+
+*README also available in [Spanish](./README.md).*
