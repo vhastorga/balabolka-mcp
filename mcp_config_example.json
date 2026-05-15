@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "balcon-tts": {
+      "command": "python",
+      "args": [
+        "C:/Users/<YOUR_USER>/.gemini/antigravity/balcon_mcp_server.py"
+      ]
+    }
+  }
+}
